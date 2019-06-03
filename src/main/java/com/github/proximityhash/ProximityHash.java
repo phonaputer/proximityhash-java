@@ -27,7 +27,7 @@ public class ProximityHash {
      *
      * This is for the case where the rectangle touches the radius, but no corner of the rectangle is within the radius.
      */
-    private static boolean checkCircleIntersectsRectangleGeometrically(double radius, GeoPoint center,
+    private static void checkCircleIntersectsRectangleGeometrically(double radius, GeoPoint center,
                                                                        Rectangle geoRect, String geohash,
                                                                        Set<String> partiallyWithinRadius) {
         GeoPoint nw = new GeoPoint(geoRect.maxLat, geoRect.minLon);
@@ -41,11 +41,7 @@ public class ProximityHash {
                 radius >= MathUtils.distanceToLine(center, se, ne)) {
 
             partiallyWithinRadius.add(geohash);
-
-            return true;
         }
-
-        return false;
     }
 
     /**
@@ -89,24 +85,18 @@ public class ProximityHash {
         return false;
     }
 
-    private static boolean isGeohashInsideRadius(double radius, GeoPoint startingPoint, GeoPoint point,
+    private static void checkGeohashInsideRadius(double radius, GeoPoint startingPoint, GeoPoint point,
                                                  Set<String> fullyWithinRadius, Set<String> partiallyWithinRadius,
                                                  int precision) {
         String geohash = GeoHashUtils.stringEncode(point.lon(), point.getLat(), precision);
-
-        if (fullyWithinRadius.contains(geohash) || partiallyWithinRadius.contains(geohash)){
-            return true;
-        }
-
         Rectangle geohashRectangle = GeoHashUtils.bbox(geohash);
 
-        if(checkInsideRadiusUsingSimpleMath(radius, startingPoint, geohashRectangle, geohash, fullyWithinRadius,
+        if(!checkInsideRadiusUsingSimpleMath(radius, startingPoint, geohashRectangle, geohash, fullyWithinRadius,
                 partiallyWithinRadius)) {
-            return true;
-        }
 
-        return checkCircleIntersectsRectangleGeometrically(radius, startingPoint, geohashRectangle, geohash,
-                partiallyWithinRadius);
+            checkCircleIntersectsRectangleGeometrically(radius, startingPoint, geohashRectangle, geohash,
+                    partiallyWithinRadius);
+        }
     }
 
     /**
@@ -153,10 +143,10 @@ public class ProximityHash {
                 GeoPoint minusPlus = MathUtils.addToGeopoint(startingPoint, -latStep, lngStep);
                 GeoPoint minusMinus = MathUtils.addToGeopoint(startingPoint, -latStep, -lngStep);
 
-                isGeohashInsideRadius(radius, startingPoint, plusPlus, fullMatchHashes, partialMatchHashes, precision);
-                isGeohashInsideRadius(radius, startingPoint, plusMinus, fullMatchHashes, partialMatchHashes, precision);
-                isGeohashInsideRadius(radius, startingPoint, minusPlus, fullMatchHashes, partialMatchHashes, precision);
-                isGeohashInsideRadius(radius, startingPoint, minusMinus, fullMatchHashes, partialMatchHashes, precision);
+                checkGeohashInsideRadius(radius, startingPoint, plusPlus, fullMatchHashes, partialMatchHashes, precision);
+                checkGeohashInsideRadius(radius, startingPoint, plusMinus, fullMatchHashes, partialMatchHashes, precision);
+                checkGeohashInsideRadius(radius, startingPoint, minusPlus, fullMatchHashes, partialMatchHashes, precision);
+                checkGeohashInsideRadius(radius, startingPoint, minusMinus, fullMatchHashes, partialMatchHashes, precision);
             }
         }
 
